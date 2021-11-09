@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        id="cordova-plugin-ml-barcode-scanner" version="1.0.0">
+    <name>MlBarcodeScanner</name>
+
+    <description>An Cordova plugin for iOS and Android that allows to open a barcode scanner. For the detection the plugin uses Googles MLKit.</description>
+    <license>MIT</license>
+
+    <keywords>cordova,android,ios,image,photos,zoom</keywords>
+    <repo>https://github.com/ImpacGroup/cordova-plugin-ml-barcode-scanner.git</repo>
+    <issue>https://github.com/ImpacGroup/cordova-plugin-ml-barcode-scanner/issues</issue>
+
+    <engines>
+        <engine name="cordova" version=">=6.0.0"/>
+    </engines>
+
+    <js-module src="www/barcodeScanner.js" name="MlBarcodeScanner">
+        <clobbers target="window.plugins.barcodeScanner" />
+    </js-module>
+
+    <platform name="ios">
+        <config-file target="config.xml" parent="/*">
+            <feature name="MlBarcodeScanner">
+                <param name="ios-package" value="MlBarcodeScanner"/>
+            </feature>
+        </config-file>
+    </platform>
+
+    <platform name="android">
+
+        <config-file target="config.xml" parent="/*">
+            <feature name="MlBarcodeScanner">
+                <param name="android-package" value="" />
+            </feature>
+        </config-file>
+        
+        <config-file target="AndroidManifest.xml" parent="/manifest/application">
+            <activity android:label="" android:name=""></activity>
+        </config-file>
+    </platform>
+</plugin>

@@ -1,0 +1,42 @@
+{
+  "name": "cordova-plugin-ml-barcode-scanner",
+  "version": "1.0.0",
+  "description": "An Cordova plugin for iOS and Android that allows to open a barcode scanner. For the detection the plugin uses Googles MLKit.",
+  "cordova": {
+    "id": "cordova-plugin-ml-barcode-scanner",
+    "platforms": [
+      "ios",
+      "android"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ImpacGroup/cordova-plugin-ml-barcode-scanner.git"
+  },
+  "keywords": [
+    "cordova",
+    "android",
+    "ios",
+    "image",
+    "barcode",
+    "ean",
+    "qrcode",
+    "ecosystem:cordova",
+    "cordova-ios",
+    "cordova-android"
+  ],
+  "engines": {
+    "cordovaDependencies": {
+      "1.0.0": {
+        "cordova-android": ">9.0.0",
+        "cordova-ios": ">6.0.0"
+      }
+    }
+  },
+  "author": "Impac GmbH",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ImpacGroup/cordova-plugin-ml-barcode-scanner/issues"
+  },
+  "homepage": "https://github.com/ImpacGroup/cordova-plugin-ml-barcode-scanner#readme"
+}
