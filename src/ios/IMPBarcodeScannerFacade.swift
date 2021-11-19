@@ -8,6 +8,10 @@
 import Foundation
 import Combine
 
+enum CordovaError: Error {
+    case WAITING_RESPONSE
+}
+
 
 @objc (MlBarcodeScanner) class IMPBarcodeScannerFacade: CDVPlugin, CameraViewControllerDelegate {
     
