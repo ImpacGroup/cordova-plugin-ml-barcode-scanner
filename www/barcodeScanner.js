@@ -3,11 +3,11 @@
 // Empty constructor
 function MlBarcodeScanner() {}
 
-MlBarcodeScanner.prototype.open = function(codes, successCallback, errorCallback) {
-    cordova.exec(successCallback, errorCallback, 'MlBarcodeScanner', 'openScanner', [codes]);
+MlBarcodeScanner.prototype.openScanner = function(title, successCallback, errorCallback) {
+    cordova.exec(successCallback, errorCallback, 'MlBarcodeScanner', 'openScanner', [title]);
 }
 
-MlBarcodeScanner.prototype.open = function(answer, errorCallback) {
+MlBarcodeScanner.prototype.validationResult = function(answer, errorCallback) {
     cordova.exec(null, errorCallback, 'MlBarcodeScanner', 'validationResult', [answer]);
 }
 
