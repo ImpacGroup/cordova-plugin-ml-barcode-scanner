@@ -24,13 +24,11 @@ import Combine
      */
     @objc(openScanner:) func openScanner(command: CDVInvokedUrlCommand) {
         let title = command.arguments.count == 1 && command.arguments[0] as? String != nil ? command.arguments[0] as! String : "Scanner"
-        let cameraStoryBoard = UIStoryboard(name: "Camera", bundle: nil)
-        if let cameraVC = cameraStoryBoard.instantiateInitialViewController() as? CameraViewController {
-            cameraVC.modalPresentationStyle = .overFullScreen
-            cameraVC.title = title
-            cameraVC.delegate = self
-            viewController.present(cameraVC, animated: true, completion: nil)
-        }
+        let cameraVC = CameraViewController(nibName: "Camera", bundle: nil)
+        cameraVC.modalPresentationStyle = .overFullScreen
+        cameraVC.title = title
+        cameraVC.delegate = self
+        viewController.present(cameraVC, animated: true, completion: nil)
     }
     
     /**

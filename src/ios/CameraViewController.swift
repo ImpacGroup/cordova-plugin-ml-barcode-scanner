@@ -357,9 +357,9 @@ extension CameraViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
         }
         
         getVisionImage(image)
-            .flatMap { visionImage -> AnyPublisher<[Barcode], Error> in
+            .flatMap ({ visionImage -> AnyPublisher<[Barcode], Error> in
                 return strongSelf.scanForBarcodeIn(visionImage)
-            }.map({ codes in
+            }).map({ codes in
                 strongSelf.updatePreviewOverlayViewWithLastFrame()
                 return codes
             })

@@ -23,7 +23,7 @@ import UIKit
         let values = try decoder.container(keyedBy: CodingKeys.self)
         title = try values.decode(String.self, forKey: .title)
         let imgTintString = try? values.decode(String.self, forKey: .imgTintColor)
-        imgTintColor = imgTintString == nil ? UIColor.tintColor : UIColor.from(string: imgTintString)
+        imgTintColor = imgTintString == nil ? UIColor.systemBlue : UIColor.from(string: imgTintString)
         let imageString = try values.decode(String.self, forKey: .successImg)
         if let mImage = ScannerResult.imageForBase64String(imageString) {
             successImg = mImage.withRenderingMode(.alwaysOriginal)
@@ -34,7 +34,7 @@ import UIKit
     
     init(title: String) {
         self.title = title
-        self.imgTintColor = .systemMint
+        self.imgTintColor = .systemGray
         self.successImg = UIImage(systemName: "checkmark.circle.fill")?.withRenderingMode(.alwaysTemplate)
     }
     
