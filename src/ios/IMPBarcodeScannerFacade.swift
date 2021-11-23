@@ -10,6 +10,7 @@ import Combine
 
 enum CordovaError: Error {
     case WAITING_RESPONSE
+    case INTERNAL_ERROR
 }
 
 
@@ -19,14 +20,17 @@ enum CordovaError: Error {
     
     private var updateCallbackId: String?
     
-    private var cancellables: Set<AnyCancellable> = []
+    private lazy var cancellables: Set<AnyCancellable> = []
     
-    private var answers: [Answer] = []
+    private lazy var answers: [Answer] = []
+    
+    private lazy var codesToValidate: [Code] = []
     
     /**
      Open Scanner
      */
     @objc(openScanner:) func openScanner(command: CDVInvokedUrlCommand) {
+        updateCallbackId = command.callbackId
         let title = command.arguments.count == 1 && command.arguments[0] as? String != nil ? command.arguments[0] as! String : "Scanner"
         let cameraVC = CameraViewController(nibName: "Camera", bundle: nil)
         cameraVC.modalPresentationStyle = .overFullScreen
@@ -43,7 +47,7 @@ enum CordovaError: Error {
             do {
                 let decoder = JSONDecoder()
                 if let data = infoJson.data(using: String.Encoding.utf8) {
-                    let answer = try decoder.decode(Answer.self, from: data)
+                    let answer = try decoder.decode(ValidationAnswer.self, from: data)
                     answers.append(answer)
                 }
             }
@@ -93,21 +97,35 @@ enum CordovaError: Error {
     }
     
     func isValid(_ code: Code, completion: @escaping (Bool) -> ()) {
-        let request = Request<Code>(action: "isValid", object: code)
-        request.responseTo = "validationResult"
-        sendUpdateMessage(message: request, status: CDVCommandStatus_OK)
-        
-        answerFor(requestId: request.id)
-            .catch { error -> AnyPublisher<Answer, Error> in
-                print("Error Validating: \(error)")
-                completion(false)
-                return Empty().eraseToAnyPublisher()
-            }
-            .sink(receiveCompletion: { _ in
-            }, receiveValue: { answer in
-                completion(NSString(string: answer.result).boolValue)
-            })
-            .store(in: &cancellables)
+        if !codesToValidate.contains(where: { c in
+            c.value == code.value && c.type == code.type
+        }) {
+            codesToValidate.append(code)
+            let request = Request<Code>(action: "isValid", object: code)
+            request.responseTo = "validationResult"
+            sendUpdateMessage(message: request, status: CDVCommandStatus_OK)
+            
+            answerFor(requestId: request.id)
+                .catch { error -> AnyPublisher<Answer, Error> in
+                    print("Error Validating: \(error)")
+                    completion(false)
+                    return Empty().eraseToAnyPublisher()
+                }
+                .sink(receiveCompletion: {[weak self] _ in
+                    if let index = self?.codesToValidate.firstIndex { c in
+                        c.value == code.value && c.type == code.type
+                    } {
+                        self?.codesToValidate.remove(at: index)
+                    }
+                }, receiveValue: { answer in
+                    if let mAnswer = answer as? ValidationAnswer {
+                        completion(mAnswer.result)
+                    } else {
+                        print("Invalid Answer type")
+                    }
+                })
+                .store(in: &cancellables)
+        }
     }
     
     /**
@@ -117,11 +135,13 @@ enum CordovaError: Error {
         return Just<Void>(())
             .setFailureType(to: CordovaError.self)
             .delay(for: 0.1, scheduler: DispatchQueue.global())
-            .tryMap({ _ -> Answer in
-                if let answer = self.answers.first(where: { a in a.requestId == requestId }) {
+            .tryMap({ [weak self] _ -> Answer in
+                guard let strongSelf = self else {
+                    throw CordovaError.INTERNAL_ERROR
+                }
+                if let answer = strongSelf.answers.first(where: { a in a.requestId == requestId }) {
                     return answer
                 }
-                NSLog("Test Timer", "")
                 throw CordovaError.WAITING_RESPONSE
             })
             .retry(30)
@@ -135,8 +155,8 @@ enum CordovaError: Error {
     
     func didClose() {
         sendUpdateMessage(message: ScannerMessage<String>(action: "didClose"), status: CDVCommandStatus_OK, keep: false)
+        cancellables.removeAll()
     }
-    
     
     private func sendUpdateMessage<T: Encodable>(message: T, status: CDVCommandStatus, keep: Bool = true) {
         if let callbackId = updateCallbackId {
@@ -152,18 +172,32 @@ enum CordovaError: Error {
     }
 }
 
-struct Answer: Decodable {
-    let requestId: String
-    let result: String
+struct ValidationAnswer: Answer, Decodable {
+    var requestId: String
+    
+    let result: Bool
 }
 
-class Request<T: Encodable>: ScannerMessage<T> {
+struct ResultScreenAnswer: Answer, Decodable {
+    var requestId: String
+    
+    var result: ScannerResult
+}
+
+protocol Answer {
+    var requestId: String { get }
+}
+
+class Request<T: Encodable>: Encodable {
     let id: String
     var responseTo: String? = nil
+    var object: T? = nil
+    let action: String
     
-    override init(action: String, object: T? = nil) {
+    init(action: String, object: T? = nil) {
         id = UUID().uuidString
-        super.init(action: action, object: object)
+        self.object = object
+        self.action = action
     }
 }
 
