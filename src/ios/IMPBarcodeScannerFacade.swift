@@ -43,18 +43,8 @@ enum CordovaError: Error {
      Answer if is a valid barcode
      */
     @objc(validationResult:) func validationResult(command: CDVInvokedUrlCommand) {
-        if command.arguments.count == 1, let infoJson = command.arguments[0] as? String {
-            do {
-                let decoder = JSONDecoder()
-                if let data = infoJson.data(using: String.Encoding.utf8) {
-                    let answer = try decoder.decode(ValidationAnswer.self, from: data)
-                    answers.append(answer)
-                }
-            }
-            catch {
-                let result = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: error.localizedDescription)
-                self.commandDelegate.send(result, callbackId: command.callbackId)
-            }
+        if let mAnswer = decodeFrom(command: command, type: ValidationAnswer.self) {
+            answers.append(mAnswer)
         }
     }
     
@@ -62,11 +52,24 @@ enum CordovaError: Error {
      Set properties for info screen below scanner.
      */
     @objc(setInfoScreen:) func setInfoScreen(command: CDVInvokedUrlCommand) {
-        if command.arguments.count == 1, let json = command.arguments[0] as? String {
+        infoScreen = decodeFrom(command: command, type: ScannerInfo.self)
+    }
+    
+    @objc(setResultScreen:) func setResultScreen(command: CDVInvokedUrlCommand) {
+        if let mAnswer = decodeFrom(command: command, type: ResultScreenAnswer.self) {
+            answers.append(mAnswer)
+        }
+    }
+    
+    /**
+     Converts a command to a Decodable
+     */
+    private func decodeFrom<T>(command: CDVInvokedUrlCommand, type: T.Type) -> T? where T : Decodable {
+        if command.arguments.count == 1, let infoJson = command.arguments[0] as? String {
             do {
                 let decoder = JSONDecoder()
-                if let data = json.data(using: String.Encoding.utf8) {
-                    infoScreen = try decoder.decode(ScannerInfo.self, from: data)
+                if let data = infoJson.data(using: String.Encoding.utf8) {
+                    return try decoder.decode(type , from: data)
                 }
             }
             catch {
@@ -74,6 +77,7 @@ enum CordovaError: Error {
                 self.commandDelegate.send(result, callbackId: command.callbackId)
             }
         }
+        return nil
     }
     
     func didSelect(_ code: Code) {
@@ -93,7 +97,22 @@ enum CordovaError: Error {
         request.responseTo = ""
         
         sendUpdateMessage(message: request, status: CDVCommandStatus_OK)
-        completion(ScannerResult(title: "Test"))
+        
+        answerFor(requestId: request.id)
+            .catch { error -> AnyPublisher<Answer, Error> in
+                print("Error Validating: \(error)")
+                completion(ScannerResult(title: ""))
+                return Empty().eraseToAnyPublisher()
+            }
+            .sink(receiveCompletion: { _ in
+            }, receiveValue: { answer in
+                if let mAnswer = answer as? ResultScreenAnswer {
+                    completion(mAnswer.result)
+                } else {
+                    print("Invalid Answer type")
+                }
+            })
+            .store(in: &cancellables)
     }
     
     func isValid(_ code: Code, completion: @escaping (Bool) -> ()) {
