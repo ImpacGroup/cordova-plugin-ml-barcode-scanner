@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
         xmlns:android="http://schemas.android.com/apk/res/android"
-        id="cordova-plugin-ml-barcode-scanner" version="0.0.4">
+        id="cordova-plugin-ml-barcode-scanner" version="0.0.5">
     <name>MlBarcodeScanner</name>
 
     <description>An Cordova plugin for iOS and Android that allows to open a barcode scanner. For the detection the plugin uses Googles MLKit.</description>
@@ -36,6 +36,7 @@
         <source-file src="src/ios/IMPBarcodeScannerFacade.swift"/>
         <source-file src="src/ios/MLKitExtension.swift"/>
         <source-file src="src/ios/ScannerInfo.swift"/>
+        <source-file src="src/ios/ScannerAction.swift"/>
         <source-file src="src/ios/ScannerResult.swift"/>
         <source-file src="src/ios/UIColor-Extension.swift"/>
         <source-file src="src/ios/UIUtilities.swift"/>

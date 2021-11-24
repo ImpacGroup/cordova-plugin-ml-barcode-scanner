@@ -81,7 +81,7 @@ enum CordovaError: Error {
     }
     
     func didSelect(_ code: Code) {
-        sendUpdateMessage(message: ScannerMessage<Code>(action: "didSelectCode", object: code), status: CDVCommandStatus_OK)
+        sendUpdateMessage(message: ScannerMessage<Code>(action: ScannerAction.DID_SELECT_CODE.rawValue, object: code), status: CDVCommandStatus_OK)
     }
     
     func setScreen() -> ScannerInfo {
@@ -89,11 +89,11 @@ enum CordovaError: Error {
     }
     
     func preferredManuelInput() {
-        sendUpdateMessage(message: ScannerMessage<String>(action: "preferredManuelInput"), status: CDVCommandStatus_OK)
+        sendUpdateMessage(message: ScannerMessage<String>(action: ScannerAction.MANUAL_INPUT.rawValue), status: CDVCommandStatus_OK)
     }
     
     func setResult(_ code: Code, completion: @escaping (ScannerResult) -> ()) {
-        let request = Request<Code>(action: "resultScreen", object: code)
+        let request = Request<Code>(action: ScannerAction.RESULT_SCREEN.rawValue, object: code)
         request.responseTo = ""
         
         sendUpdateMessage(message: request, status: CDVCommandStatus_OK)
@@ -120,7 +120,7 @@ enum CordovaError: Error {
             c.value == code.value && c.type == code.type
         }) {
             codesToValidate.append(code)
-            let request = Request<Code>(action: "isValid", object: code)
+            let request = Request<Code>(action: ScannerAction.IS_VALID.rawValue, object: code)
             request.responseTo = "validationResult"
             sendUpdateMessage(message: request, status: CDVCommandStatus_OK)
             
@@ -169,11 +169,11 @@ enum CordovaError: Error {
     
     
     func willClose() {
-        sendUpdateMessage(message: ScannerMessage<String>(action: "willClose"), status: CDVCommandStatus_OK)
+        sendUpdateMessage(message: ScannerMessage<String>(action: ScannerAction.WILL_CLOSE.rawValue), status: CDVCommandStatus_OK)
     }
     
     func didClose() {
-        sendUpdateMessage(message: ScannerMessage<String>(action: "didClose"), status: CDVCommandStatus_OK, keep: false)
+        sendUpdateMessage(message: ScannerMessage<String>(action: ScannerAction.DID_CLOSE.rawValue), status: CDVCommandStatus_OK, keep: false)
         cancellables.removeAll()
     }
     
