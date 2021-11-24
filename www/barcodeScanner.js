@@ -16,7 +16,7 @@ MlBarcodeScanner.prototype.setInfoScreen = function(info, errorCallback) {
 }
 
 MlBarcodeScanner.prototype.setResultScreen = function(screen, errorCallback) {
-    cordova.exec(null, errorCallback, 'MlBarcodeScanner', 'setResultScreen', [info]);
+    cordova.exec(null, errorCallback, 'MlBarcodeScanner', 'setResultScreen', [screen]);
 }
 
 MlBarcodeScanner.install = function() {

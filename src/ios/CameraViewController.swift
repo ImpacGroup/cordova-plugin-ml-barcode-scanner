@@ -118,7 +118,7 @@ class CameraViewController: UIViewController {
         output.videoSettings = [
           (kCVPixelBufferPixelFormatTypeKey as String): kCVPixelFormatType_32BGRA
         ]
-        output.alwaysDiscardsLateVideoFrames = true        
+        output.alwaysDiscardsLateVideoFrames = true
           
         let outputQueue = DispatchQueue(label: Constant.videoDataOutputQueueLabel)
         output.setSampleBufferDelegate(strongSelf, queue: outputQueue)
@@ -154,7 +154,7 @@ class CameraViewController: UIViewController {
                 try device.lockForConfiguration()
                 device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: 25)
                 device.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: 30)
-                device.unlockForConfiguration()                
+                device.unlockForConfiguration()
                 
                 guard strongSelf.captureSession.canAddInput(input) else {
                     print("Failed to add capture session input.")
@@ -235,31 +235,33 @@ class CameraViewController: UIViewController {
     
     private func updateResultView(barcode: Barcode, animated: Bool = true, completion: @escaping () -> ()) {
         delegate?.setResult(Code(value: barcode.displayValue!, type: BarcodeType.from(format: barcode.format)), completion: { [weak self] result in
-            guard let strongSelf = self else {
-                return
-            }
-            strongSelf.resultLabel.text = result.title
-            strongSelf.resultImageView.image = result.successImg
-            strongSelf.resultImageView.tintColor = result.imgTintColor
-            
-            if animated {
-                strongSelf.resultView.alpha = 0.0
-                strongSelf.resultView.isHidden = false
-                strongSelf.resultImageView.transform = CGAffineTransform(scaleX: 0.0, y: 0.0)
-                UIView.animate(withDuration: 0.3, delay: 0.0, options: .curveEaseInOut) {
-                    strongSelf.infoView.alpha = 0.0
-                    strongSelf.resultView.alpha = 1.0
-                } completion: { [weak self] _ in
-                    strongSelf.infoView.alpha = 1.0
-                    UIView.animate(withDuration: 0.7, delay: 0.0, usingSpringWithDamping: 0.4, initialSpringVelocity: 0, options: .curveEaseInOut, animations: {
-                        strongSelf.resultImageView.transform = .identity
-                    }) { _ in
-                        completion()
-                    }
+            DispatchQueue.main.async {
+                guard let strongSelf = self else {
+                    return
                 }
-            } else {
-                strongSelf.resultView.isHidden = false
-                completion()
+                strongSelf.resultLabel.text = result.title
+                strongSelf.resultImageView.image = result.successImg
+                strongSelf.resultImageView.tintColor = result.imgTintColor
+                
+                if animated {
+                    strongSelf.resultView.alpha = 0.0
+                    strongSelf.resultView.isHidden = false
+                    strongSelf.resultImageView.transform = CGAffineTransform(scaleX: 0.0, y: 0.0)
+                    UIView.animate(withDuration: 0.3, delay: 0.0, options: .curveEaseInOut) {
+                        strongSelf.infoView.alpha = 0.0
+                        strongSelf.resultView.alpha = 1.0
+                    } completion: { [weak self] _ in
+                        strongSelf.infoView.alpha = 1.0
+                        UIView.animate(withDuration: 0.7, delay: 0.0, usingSpringWithDamping: 0.4, initialSpringVelocity: 0, options: .curveEaseInOut, animations: {
+                            strongSelf.resultImageView.transform = .identity
+                        }) { _ in
+                            completion()
+                        }
+                    }
+                } else {
+                    strongSelf.resultView.isHidden = false
+                    completion()
+                }
             }
         })
     }
@@ -469,8 +471,12 @@ extension CameraViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
             return Fail(error: BarcodeError.alreadyMarked)
                 .eraseToAnyPublisher()
         } else {
-            return Just(detectedBarcodes.first!)
-                .setFailureType(to: Error.self)
+            if let code = detectedBarcodes.first {
+                return Just(code)
+                    .setFailureType(to: Error.self)
+                    .eraseToAnyPublisher()
+            }
+            return Fail(error: BarcodeError.nothingFound)
                 .eraseToAnyPublisher()
         }
     }
