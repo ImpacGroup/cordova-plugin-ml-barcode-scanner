@@ -1,6 +1,6 @@
 //
-//  UIColor-Extension.swift
-//  Cordova Tracking Transparency
+//  ColorHelper-Extension.swift
+//  MLBarcodeScanner
 //
 //  Created by Felix Nievelstein on 11.05.21.
 //
@@ -10,19 +10,19 @@ import UIKit
 extension UIColor {
     
     static func from(string: String?) -> UIColor {
-        if let hexColor = string, let uiColor = UIColor(hex: hexColor) {
+        if let hexColor = string, let uiColor = UIColor(hexString: hexColor) {
             return uiColor
         } else {
             return UIColor.white
         }
     }
     
-    public convenience init?(hex: String) {
+    public convenience init?(hexString: String) {
         let r, g, b, a: CGFloat
 
-        if hex.hasPrefix("#") {
-            let start = hex.index(hex.startIndex, offsetBy: 1)
-            let hexColor = String(hex[start...])
+        if hexString.hasPrefix("#") {
+            let start = hexString.index(hexString.startIndex, offsetBy: 1)
+            let hexColor = String(hexString[start...])
 
             if hexColor.count == 8 {
                 let scanner = Scanner(string: hexColor)
