@@ -24,6 +24,7 @@ For iOS you need to add this to your cordova config.xml
     <string>ENTER YOUR MESSAGE HERE</string>
 </edit-config>
 
+```
 
 For android you need to make sure that koltin is acitvated in your cordova config.xml.
 To these add the following:
