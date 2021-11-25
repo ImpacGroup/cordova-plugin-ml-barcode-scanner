@@ -36,6 +36,7 @@
         <source-file src="src/ios/IMPBarcodeScannerFacade.swift"/>
         <source-file src="src/ios/MLKitExtension.swift"/>
         <source-file src="src/ios/ScannerInfo.swift"/>
+        <source-file src="src/ios/ProcessRate.swift"/>
         <source-file src="src/ios/ScannerAction.swift"/>
         <source-file src="src/ios/ScannerResult.swift"/>
         <source-file src="src/ios/UIColor-Extension.swift"/>

@@ -10,6 +10,7 @@ import AVFoundation
 import MLKit
 import Combine
 
+
 class CameraViewController: UIViewController {
     
     private var previewLayer: AVCaptureVideoPreviewLayer!
@@ -20,6 +21,12 @@ class CameraViewController: UIViewController {
     private var detectedBarcodes: [Barcode] = []
     
     public weak var delegate: CameraViewControllerDelegate? = nil
+    
+    /**
+     The rate defines if every image or not every image should be processed. If processRate is set to FAST every image gets processed. MEDIUM is the default value.
+     */
+    public var processRate: ProcessRate = .MEDIUM
+    private var imageProcessCounter: Int = 0
     
     @IBOutlet private weak var cameraView: UIView!
     @IBOutlet weak var scanView: UIView!
@@ -305,17 +312,32 @@ extension CameraViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
         }
 
         lastFrame = sampleBuffer
-                                
-        guard let mlImage = getMLImage(sampleBuffer: sampleBuffer, cropArea: scanFrame, videoFrame: videoFrame) else {
-            DispatchQueue.main.sync { [weak self] in
-                self?.delegate?.couldNotAnalyzeInput?()
-            }
-            return
-        }
+        updatePreviewOverlayViewWithLastFrame()
         
-        let imageWidth = CGFloat(CVPixelBufferGetWidth(imageBuffer))
-        let imageHeight = CGFloat(CVPixelBufferGetHeight(imageBuffer))
-        analyzeOnDevice(in: mlImage, width: imageWidth, height: imageHeight)
+        if shouldProcessImage() {
+            guard let mlImage = getMLImage(sampleBuffer: sampleBuffer, cropArea: scanFrame, videoFrame: videoFrame) else {
+                DispatchQueue.main.sync { [weak self] in
+                    self?.delegate?.couldNotAnalyzeInput?()
+                }
+                return
+            }
+            
+            let imageWidth = CGFloat(CVPixelBufferGetWidth(imageBuffer))
+            let imageHeight = CGFloat(CVPixelBufferGetHeight(imageBuffer))
+            analyzeOnDevice(in: mlImage, width: imageWidth, height: imageHeight)
+        }
+    }
+    
+    private func shouldProcessImage() -> Bool {
+        if imageProcessCounter >= processRate.rawValue {
+            print("Process")
+            imageProcessCounter = 0
+            return true
+        } else {
+            imageProcessCounter += 1
+            print("Wait")
+            return false
+        }
     }
     
     /**
@@ -362,9 +384,6 @@ extension CameraViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
             .setFailureType(to: Error.self)
             .flatMap ({ visionImage -> AnyPublisher<[Barcode], Error> in
                 return strongSelf.scanForBarcodeIn(visionImage)
-            }).map({ codes in
-                strongSelf.updatePreviewOverlayViewWithLastFrame()
-                return codes
             })
             .flatMap { codes in
                 return strongSelf.validate(codes: codes)
