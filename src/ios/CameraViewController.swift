@@ -330,12 +330,10 @@ extension CameraViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
     
     private func shouldProcessImage() -> Bool {
         if imageProcessCounter >= processRate.rawValue {
-            print("Process")
             imageProcessCounter = 0
             return true
         } else {
             imageProcessCounter += 1
-            print("Wait")
             return false
         }
     }
