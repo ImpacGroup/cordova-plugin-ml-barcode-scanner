@@ -10,6 +10,11 @@
 
 ### Install ###
 
+```
+cordova plugin add https://github.com/ImpacGroup/cordova-plugin-ml-barcode-scanner
+
+
+
 ### Immplementation ###
 
 For android you need to make sure that koltin is acitvated in your cordova config.xml.
