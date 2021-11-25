@@ -13,7 +13,7 @@
 ```
 cordova plugin add https://github.com/ImpacGroup/cordova-plugin-ml-barcode-scanner
 
-
+```
 
 ### Immplementation ###
 
