@@ -87,6 +87,11 @@ class CameraViewController: UIViewController {
       stopSession()
     }
     
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        previewLayer.frame = cameraView.frame
+    }
+    
     private func startSession() {
       weak var weakSelf = self
       sessionQueue.async {
@@ -187,11 +192,6 @@ class CameraViewController: UIViewController {
       return nil
     }
     
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        previewLayer.frame = cameraView.frame
-    }
-    
     private func updatePreviewOverlayViewWithLastFrame() {
         weak var weakSelf = self
         DispatchQueue.main.sync {
@@ -273,13 +273,45 @@ class CameraViewController: UIViewController {
         })
     }
     
+    private func getImageOrientation() -> UIImage.Orientation {
+        if let interfaceOrientation = UIApplication.shared.windows.first?.windowScene?.interfaceOrientation {
+            switch interfaceOrientation {
+            case .unknown:
+                return .right
+            case .portrait:
+                return .right
+            case .portraitUpsideDown:
+                return .left
+            case .landscapeLeft:
+                return .down
+            case .landscapeRight:
+                return .up
+            @unknown default:
+                return .right
+            }
+        } else {
+            switch UIDevice.current.orientation {
+            case .landscapeLeft:
+                return .up
+            case .landscapeRight:
+                return .down
+            case .portrait:
+                return .right
+            case .portraitUpsideDown:
+                return .left
+            default:
+                return .right
+            }
+        }
+    }
+    
     private func updatePreviewOverlayViewWithImageBuffer(_ imageBuffer: CVImageBuffer?) {
-      guard let imageBuffer = imageBuffer else {
-        return
-      }
-      let orientation: UIImage.Orientation = .right
-      let image = UIUtilities.createUIImage(from: imageBuffer, orientation: orientation)
-      previewOverlayView.image = image
+        guard let imageBuffer = imageBuffer else {
+            return
+        }
+        let orientation: UIImage.Orientation = getImageOrientation()
+        let image = UIUtilities.createUIImage(from: imageBuffer, orientation: orientation)
+        previewOverlayView.image = image
     }
     
     @IBAction func infoBtnPressed(_ sender: Any) {
