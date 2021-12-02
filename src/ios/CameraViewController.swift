@@ -439,7 +439,7 @@ extension CameraViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
             }, receiveValue: { code in
                 let type = BarcodeType.from(format: code.format)
                 strongSelf.delegate?.didSelect(Code(value: code.displayValue!, type: type))
-                strongSelf.dismiss(animated: true, completion: nil)
+                strongSelf.close()
             }).store(in: &cancellables)
     }
     
