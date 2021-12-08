@@ -87,7 +87,7 @@
         
         <source-file src="src/android/activity_camera.xml" target-dir="res/layout"/>
         
-        <source-file src="src/android/ic_baseline_close_24.xml" target-dir="res/drawable"/>
+        <source-file src="src/android/ic_camera_close_24.xml" target-dir="res/drawable"/>
         <source-file src="src/android/camera_info_background.xml" target-dir="res/drawable"/>
         <source-file src="src/android/camera_nav_background.xml" target-dir="res/drawable"/>
         <source-file src="src/android/camera_theme.xml" target-dir="res/values"/>
