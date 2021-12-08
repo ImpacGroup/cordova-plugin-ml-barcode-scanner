@@ -57,7 +57,7 @@
 
         <config-file target="config.xml" parent="/*">
             <feature name="MlBarcodeScanner">
-                <param name="android-package" value="de.impacgroup.mlbarcodescanner" />
+                <param name="android-package" value="de.impacgroup.mlbarcodescanner.MlBarcodeScanner" />
             </feature>
         </config-file>
                         
