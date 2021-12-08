@@ -3,6 +3,7 @@ package de.impacgroup.mlbarcodescanner.module
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.content.res.Resources
 import android.graphics.Color
 import android.os.Bundle
@@ -97,8 +98,8 @@ class CameraActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsR
 
             val btn: Button = findViewById(loadResource("manual_button", ResourceType.IDENTIFIER))
             btn.text = it.button?.title
-            val backgroundColor = Color.parseColor(it.button?.backgroundColor)
-            btn.setBackgroundColor(backgroundColor)
+            val color = ColorStateList.valueOf(Color.parseColor(it.button?.backgroundColor))
+            btn.backgroundTintList = color
         }
     }
 
