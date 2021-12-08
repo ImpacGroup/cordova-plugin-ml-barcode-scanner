@@ -96,8 +96,8 @@
         
         <framework src="com.google.mlkit:camera:16.0.0-beta1"/>
         <framework src="com.google.mlkit:barcode-scanning:17.0.0"/>
-        <framework src="androidx.camera:camera-camera2:1.1.0-alpha11"/>
-        <framework src="androidx.camera:camera-lifecycle:1.1.0-alpha11"/>
+        <framework src="androidx.camera:camera-camera2:1.0.2"/>
+        <framework src="androidx.camera:camera-lifecycle:1.0.2"/>
         <framework src="com.google.android.odml:image:1.0.0-beta1"/>
         <framework src="com.google.code.gson:gson:2.8.7"/>
         <framework src="androidx.constraintlayout:constraintlayout:2.1.1"/>
