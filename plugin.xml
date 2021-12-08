@@ -83,7 +83,6 @@
         <source-file src="src/android/ScannerInfo.kt" target-dir="src/main/kotlin/de/impacgroup/mlbarcodescanner/module"/>
         <source-file src="src/android/ScopedExecutor.java" target-dir="src/de/impacgroup/mlbarcodescanner/module/mlkit"/>
         <source-file src="src/android/VisionImageProcessor.java" target-dir="src/de/impacgroup/mlbarcodescanner/module/mlkit"/>
-        <source-file src="src/android/VisionImageProcessor.java" target-dir="src/de/impacgroup/mlbarcodescanner/module/mlkit"/>
         <source-file src="src/android/VisionProcessorBase.kt" target-dir="src/main/kotlin/de/impacgroup/mlbarcodescanner/module/mlkit"/>
         <source-file src="src/android/activity_zoom_image.xml" target-dir="res/layout"/>
         <source-file src="src/android/zoom_image_fragment.xml" target-dir="res/layout"/>
