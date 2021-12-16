@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
         xmlns:android="http://schemas.android.com/apk/res/android"
-        id="cordova-plugin-ml-barcode-scanner" version="0.1.1">
+        id="cordova-plugin-ml-barcode-scanner" version="0.1.2">
     <name>MlBarcodeScanner</name>
 
     <description>An Cordova plugin for iOS and Android that allows to open a barcode scanner. For the detection the plugin uses Googles MLKit.</description>
@@ -62,7 +62,7 @@
         </config-file>
                         
         <config-file target="AndroidManifest.xml" parent="/manifest/application">
-            <activity android:label="Camera-Activity" android:name="de.impacgroup.mlbarcodescanner.module.CameraActivity"></activity>
+            <activity android:label="Camera-Activity" android:name="de.impacgroup.mlbarcodescanner.CordovaScanner"></activity>
         </config-file>
         
         
