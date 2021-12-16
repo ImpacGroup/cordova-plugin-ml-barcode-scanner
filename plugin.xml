@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
         xmlns:android="http://schemas.android.com/apk/res/android"
-        id="cordova-plugin-ml-barcode-scanner" version="0.1.3">
+        id="cordova-plugin-ml-barcode-scanner" version="0.1.4">
     <name>MlBarcodeScanner</name>
 
     <description>An Cordova plugin for iOS and Android that allows to open a barcode scanner. For the detection the plugin uses Googles MLKit.</description>
@@ -85,6 +85,7 @@
         <source-file src="src/android/ScannerButton.kt" target-dir="src/main/kotlin/de/impacgroup/mlbarcodescanner/module"/>
         <source-file src="src/android/ScannerInfo.kt" target-dir="src/main/kotlin/de/impacgroup/mlbarcodescanner/module"/>
         <source-file src="src/android/ScannerResult.kt" target-dir="src/main/kotlin/de/impacgroup/mlbarcodescanner/module"/>
+        <source-file src="src/android/ProcessRate.kt" target-dir="src/main/kotlin/de/impacgroup/mlbarcodescanner/module"/>
         <source-file src="src/android/GraphicConfig.java" target-dir="src/de/impacgroup/mlbarcodescanner/module"/>
         <source-file src="src/android/GraphicOverlay.java" target-dir="src/de/impacgroup/mlbarcodescanner/module"/>
         
