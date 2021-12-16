@@ -342,20 +342,9 @@ abstract class CameraActivity : AppCompatActivity(), ActivityCompat.OnRequestPer
             }
         }
 
-    private val requiredPermissions: Array<String?>
+    private val requiredPermissions: List<String>
         get() =
-            try {
-                val info =
-                    this.packageManager.getPackageInfo(this.packageName, PackageManager.GET_PERMISSIONS)
-                val ps = info.requestedPermissions
-                if (ps != null && ps.isNotEmpty()) {
-                    ps
-                } else {
-                    arrayOfNulls(0)
-                }
-            } catch (e: Exception) {
-                arrayOfNulls(0)
-            }
+            listOf(android.Manifest.permission.CAMERA)
 
     private fun allPermissionsGranted(): Boolean {
         for (permission in requiredPermissions) {

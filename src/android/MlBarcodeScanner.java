@@ -52,16 +52,21 @@ public class MlBarcodeScanner extends CordovaPlugin {
                 presentCallbackContext = callbackContext;
                 title = args.getString(0);
                 openScanner();
-                break;
+                return true;
             case "setInfoScreen":
                 scannerInfo = new Gson().fromJson(args.getString(0), ScannerInfo.class);
                 openScanner();
-                break;
+                return true;
             case "setResult":
-                Intent intent = new Intent(CordovaScanner.CORDOVA_SCANNER_VALIDATION_ANSWER_INTENT_KEY);
+                Intent intent = new Intent(CordovaScanner.CORDOVA_SCANNER_RESULT_ANSWER_INTENT_KEY);
                 intent.putExtra(CordovaScanner.CORDOVA_SCANNER_ANSWER_EXTRA_KEY, args.getString(0));
                 LocalBroadcastManager.getInstance(cordova.getContext()).sendBroadcast(intent);
-                break;
+                return true;
+            case "validationResult":
+                Intent validationIntent = new Intent(CordovaScanner.CORDOVA_SCANNER_VALIDATION_ANSWER_INTENT_KEY);
+                validationIntent.putExtra(CordovaScanner.CORDOVA_SCANNER_ANSWER_EXTRA_KEY, args.getString(0));
+                LocalBroadcastManager.getInstance(cordova.getContext()).sendBroadcast(validationIntent);
+                return true;
             default:
                 break;
         }
