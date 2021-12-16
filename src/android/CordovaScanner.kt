@@ -16,6 +16,7 @@ import java.io.IOException
 import java.lang.Exception
 import java.util.*
 import kotlin.collections.ArrayList
+import com.google.gson.annotations.SerializedName
 
 class CordovaScanner : CameraActivity() {
 
@@ -80,7 +81,7 @@ class CordovaScanner : CameraActivity() {
     }
 
     override suspend fun isValid(code: Code): Boolean {
-        val request = Request("", code, ScannerAction.IS_VALID.key)
+        val request = Request("validationResult", code, ScannerAction.IS_VALID.key)
         val jsonRequest = Gson().toJson(request)
         send(ScannerAction.IS_VALID, jsonRequest, CORDOVA_SCANNER_VALIDATION_INTENT_KEY)
         try {
@@ -178,7 +179,7 @@ class CordovaScanner : CameraActivity() {
 
 data class Request(
     val responseTo: String?,
-    val code: Code,
+    @SerializedName("object") val code : Code,
     val action: String
 ) {
     val id: String = UUID.randomUUID().toString()
