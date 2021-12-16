@@ -20,17 +20,13 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build.VERSION_CODES;
 import android.preference.PreferenceManager;
-import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.StringRes;
 import androidx.camera.core.CameraSelector;
 
-import com.google.android.gms.common.images.Size;
 import com.google.common.base.Preconditions;
-
-import de.impacgroup.mlbarcodescanner.module.mlkit.CameraSource;
 
 /** Utility class to retrieve shared preferences. */
 public class PreferenceUtils {
@@ -42,30 +38,6 @@ public class PreferenceUtils {
         .edit()
         .putString(context.getString(prefKeyId), value)
         .apply();
-  }
-
-  @Nullable
-  public static CameraSource.SizePair getCameraPreviewSizePair(Context context, int cameraId) {
-    Preconditions.checkArgument(
-        cameraId == CameraSource.CAMERA_FACING_BACK
-            || cameraId == CameraSource.CAMERA_FACING_FRONT);
-    String previewSizePrefKey;
-    String pictureSizePrefKey;
-    if (cameraId == CameraSource.CAMERA_FACING_BACK) {
-      previewSizePrefKey = "rcpvs";
-      pictureSizePrefKey = "rcpts";
-      try {
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-        return new CameraSource.SizePair(
-                Size.parseSize(sharedPreferences.getString(previewSizePrefKey, null)),
-                Size.parseSize(sharedPreferences.getString(pictureSizePrefKey, null)));
-      } catch (Exception e) {
-        Log.e(TAG, "getCameraPreviewSizePair: ", e);
-      }
-    }
-
-
-    return null;
   }
 
   @RequiresApi(VERSION_CODES.LOLLIPOP)

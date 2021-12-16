@@ -1,46 +1,63 @@
 package de.impacgroup.mlbarcodescanner.module
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.content.res.Resources
 import android.graphics.Color
+import android.graphics.PorterDuff
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
+import androidx.camera.core.*
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.google.mlkit.vision.barcode.Barcode
 import de.impacgroup.mlbarcodescanner.module.mlkit.BarcodeScannerProcessor
-import de.impacgroup.mlbarcodescanner.module.mlkit.CameraSource
-import de.impacgroup.mlbarcodescanner.module.mlkit.CameraSourcePreview
-import de.impacgroup.mlbarcodescanner.module.mlkit.GraphicOverlay
-import java.io.IOException
-import java.util.*
+import de.impacgroup.mlbarcodescanner.module.mlkit.BarcodeScannerProcessorListener
+import de.impacgroup.mlbarcodescanner.module.mlkit.MlImageAnalyzer
+import kotlinx.coroutines.*
+import java.lang.Runnable
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import kotlin.coroutines.resume
 
-class CameraActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsResultCallback {
+abstract class CameraActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsResultCallback {
 
+    private lateinit var cameraExecutor: ExecutorService
     private val PERMISSION_REQUESTS: Int = 1
-    private var cameraSource: CameraSource? = null
-    private var preview: CameraSourcePreview? = null
-    private var graphicOverlay: GraphicOverlay? = null
+    private lateinit var previewView: PreviewView
+    private lateinit var preview: Preview
+    private lateinit var infoLayout: ConstraintLayout
+    private lateinit var resultLayout: ConstraintLayout
+    private var imageCapture: ImageCapture? = null
+    private var imageAnalyzer: ImageAnalysis? = null
+    private var camera: Camera? = null
+    private var lensFacing: Int = CameraSelector.LENS_FACING_BACK
+    private var cameraProvider: ProcessCameraProvider? = null
+    private var detectedBarcodes: List<Barcode> = ArrayList()
 
-    companion object: CameraScanner {
+
+    companion object {
 
         private val TAG: String = "CameraActivity"
-        private const val CAMERA_VIEW_TITLE = "cameraViewTitle"
-        private const val CAMERA_SCANNER_INFO = "cameraScannerInfo"
+        const val CAMERA_VIEW_TITLE = "cameraViewTitle"
+        const val CAMERA_SCANNER_INFO = "cameraScannerInfo"
+        const val RESULT_ANIMATION_DURATION = 550
 
-        override fun startScanner(activity: AppCompatActivity, title: String, info: ScannerInfo) {
-            val detailIntent = Intent(activity.applicationContext, CameraActivity::class.java)
-            detailIntent.putExtra(CAMERA_VIEW_TITLE, title)
-            detailIntent.putExtra(CAMERA_SCANNER_INFO, info)
-            activity.startActivity(detailIntent)
-        }
+        private const val RATIO_4_3_VALUE = 4.0 / 3.0
+        private const val RATIO_16_9_VALUE = 16.0 / 9.0
 
         private fun isPermissionGranted(context: Context, permission: String?): Boolean {
             if (ContextCompat.checkSelfPermission(context, permission!!) ==
@@ -59,25 +76,24 @@ class CameraActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsR
         super.onCreate(savedInstanceState)
         setContentView(loadResource("activity_camera", ResourceType.LAYOUT))
 
-        preview = findViewById(loadResource("preview_view", ResourceType.IDENTIFIER))
-        if (preview == null) {
-            Log.d(TAG, "Preview is null")
-        }
-
-        graphicOverlay = findViewById(loadResource("graphic_overlay", ResourceType.IDENTIFIER))
-        if (graphicOverlay == null) {
-            Log.d(TAG, "graphicOverlay is null")
-        }
+        previewView = findViewById(loadResource("view_finder", ResourceType.IDENTIFIER))
+        resultLayout = findViewById(loadResource("result_view_layout", ResourceType.IDENTIFIER))
+        infoLayout = findViewById(loadResource("info_view_layout", ResourceType.IDENTIFIER))
 
         val closeBtn: ImageButton = findViewById(loadResource("close_button", ResourceType.IDENTIFIER))
         closeBtn.setOnClickListener {
             dismiss()
         }
 
-        if (allPermissionsGranted()) {
-            createCameraSource()
-        } else {
-            runtimePermissions
+        // Initialize our background executor
+        cameraExecutor = Executors.newSingleThreadExecutor()
+
+        previewView.post {
+            if (allPermissionsGranted()) {
+                setupCamera()
+            } else {
+                runtimePermissions
+            }
         }
     }
 
@@ -111,23 +127,195 @@ class CameraActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsR
         finish()
     }
 
-    public override fun onResume() {
-        super.onResume()
-        Log.d(TAG, "onResume")
-        createCameraSource()
-        startCameraSource()
+    private fun setupCamera() {
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+
+        cameraProviderFuture.addListener(Runnable {
+
+            // CameraProvider
+            cameraProvider = cameraProviderFuture.get()
+            if (!hasBackCamera()) {
+                finish()
+            }
+
+            // Build and bind the camera use cases
+            bindCameraUseCases()
+        }, ContextCompat.getMainExecutor(this))
     }
 
-    /** Stops the camera. */
-    override fun onPause() {
-        super.onPause()
-        preview?.stop()
+    private fun hasBackCamera(): Boolean {
+        return cameraProvider?.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA) ?: false
+    }
+
+    /** Declare and bind preview, capture and analysis use cases */
+    private fun bindCameraUseCases() {
+
+        // Get screen metrics used to setup camera for full screen resolution
+        val metrics = windowManager.defaultDisplay
+        Log.d(TAG, "Screen metrics: ${metrics.width} x ${metrics.height}")
+
+        val screenAspectRatio = aspectRatio(metrics.width, metrics.height)
+        Log.d(TAG, "Preview aspect ratio: $screenAspectRatio")
+
+        val rotation = metrics.rotation
+
+        // CameraProvider
+        val cameraProvider = cameraProvider
+            ?: throw IllegalStateException("Camera initialization failed.")
+
+        // CameraSelector
+        val cameraSelector = CameraSelector.Builder().requireLensFacing(lensFacing).build()
+
+        // Preview
+        preview = Preview.Builder()
+            // We request aspect ratio but no resolution
+            .setTargetAspectRatio(screenAspectRatio)
+            // Set initial target rotation
+            .setTargetRotation(rotation)
+            .build()
+
+        // ImageCapture
+        imageCapture = ImageCapture.Builder()
+            .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+            // We request aspect ratio but no resolution to match preview config, but letting
+            // CameraX optimize for whatever specific resolution best fits our use cases
+            .setTargetAspectRatio(screenAspectRatio)
+            // Set initial target rotation, we will have to call this again if rotation changes
+            // during the lifecycle of this use case
+            .setTargetRotation(rotation)
+            .build()
+
+        val analyzer = MlImageAnalyzer(BarcodeScannerProcessor(this))
+        analyzer.listener = barcodeListener
+        // ImageAnalysis
+        imageAnalyzer = ImageAnalysis.Builder()
+            .setTargetAspectRatio(screenAspectRatio)
+            .setTargetRotation(rotation)
+            .build()
+            .also {
+                it.setAnalyzer(cameraExecutor, analyzer)
+            }
+
+        // Must unbind the use-cases before rebinding them
+        cameraProvider.unbindAll()
+
+        try {
+            // A variable number of use-cases can be passed here -
+            // camera provides access to CameraControl & CameraInfo
+            camera = cameraProvider.bindToLifecycle(
+                this, cameraSelector, preview, imageCapture, imageAnalyzer)
+
+            // Attach the viewfinder's surface provider to preview use case
+            preview.setSurfaceProvider(previewView.surfaceProvider)
+            // preview?.setSurfaceProvider(fragmentCameraBinding.viewFinder.surfaceProvider)
+            // observeCameraState(camera?.cameraInfo!!)
+        } catch (exc: Exception) {
+            Log.e(TAG, "Use case binding failed", exc)
+        }
+    }
+
+    /**
+     *  [androidx.camera.core.ImageAnalysis.Builder] requires enum value of
+     *  [androidx.camera.core.AspectRatio]. Currently it has values of 4:3 & 16:9.
+     *
+     *  Detecting the most suitable ratio for dimensions provided in @params by counting absolute
+     *  of preview ratio to one of the provided values.
+     *
+     *  @param width - preview width
+     *  @param height - preview height
+     *  @return suitable aspect ratio
+     */
+    private fun aspectRatio(width: Int, height: Int): Int {
+
+        val previewRatio = width.coerceAtLeast(height).toDouble() / width.coerceAtMost(height)
+        if (kotlin.math.abs(previewRatio - RATIO_4_3_VALUE) <= kotlin.math.abs(previewRatio - RATIO_16_9_VALUE)) {
+            return AspectRatio.RATIO_4_3
+        }
+        return AspectRatio.RATIO_16_9
+    }
+
+
+    val barcodeListener = object: BarcodeScannerProcessorListener {
+        override fun onSuccess(result: List<Barcode>) {
+            CoroutineScope(Dispatchers.IO).launch {
+                reduceToNew(
+                    validate(result)
+                )?.let { code ->
+                    withContext(Dispatchers.Main) {
+                        cameraExecutor.shutdown()
+                        code.displayValue?.let {
+                            val mCode = Code(it, BarcodeType.from(code))
+                            mark(mCode)
+                            didSelect(mCode)
+                        }
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun validate(barcodes: List<Barcode>): List<Barcode>  = barcodes.filter { barcode ->
+        barcode.displayValue?.let {
+            isValid(Code(it, BarcodeType.from(barcode)))
+        } ?: kotlin.run { false }
+    }
+
+    private fun reduceToNew(barcodes: List<Barcode>): Barcode? {
+        val lastBarcodes = detectedBarcodes
+        detectedBarcodes = barcodes
+        if (barcodes.isEmpty() ||
+            lastBarcodes.isNotEmpty() && 
+            lastBarcodes.first().displayValue == barcodes.first().displayValue
+        ) {
+            return null
+        } else {
+            return detectedBarcodes.first()
+        }
+    }
+
+    private suspend fun mark(code: Code) {
+        val result = resultFor(code)
+        updateResultView(result)
+    }
+
+    private suspend fun updateResultView(result: ScannerResult) = suspendCancellableCoroutine<Unit> { cont ->
+
+        val textView: TextView = findViewById(loadResource("result_title_text_view", ResourceType.IDENTIFIER))
+        val imageView: ImageView = findViewById(loadResource("result_image_view", ResourceType.IDENTIFIER))
+        textView.text = result.title
+        if (result.successImg != null) {
+            imageView.setImageDrawable(result.successImg)
+        } else {
+            imageView.setImageDrawable(AppCompatResources.getDrawable(this, loadResource("ic_camera_success_check_circle_24", ResourceType.DRAWABLE)))
+        }
+        imageView.setColorFilter(Color.parseColor(result.imgTintColor), PorterDuff.Mode.SRC_IN)
+
+        val listener = object: AnimatorListenerAdapter() {
+            override fun onAnimationEnd(animation: Animator?) {
+                super.onAnimationEnd(animation)
+                cont.resume(Unit)
+            }
+        }
+
+        resultLayout.apply {
+            visibility = View.VISIBLE
+            alpha = 0f
+            animate()
+                .alpha(1.0f)
+                .setDuration(RESULT_ANIMATION_DURATION.toLong())
+                .setListener(listener)
+        }
+        infoLayout.animate()
+            .alpha(0f)
+            .setDuration(RESULT_ANIMATION_DURATION.toLong())
+            .setListener(null)
     }
 
     public override fun onDestroy() {
         super.onDestroy()
-        if (cameraSource != null) {
-            cameraSource?.release()
+        if (!cameraExecutor.isShutdown) {
+            cameraExecutor.shutdown()
         }
     }
 
@@ -185,50 +373,14 @@ class CameraActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsR
     ) {
         Log.i(TAG, "Permission granted!")
         if (allPermissionsGranted()) {
-            createCameraSource()
+            setupCamera()
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
-    /**
-     * Starts or restarts the camera source, if it exists. If the camera source doesn't exist yet
-     * (e.g., because onResume was called before the camera source was created), this will be called
-     * again when the camera source is created.
-     */
-    private fun startCameraSource() {
-        if (cameraSource != null) {
-            try {
-                if (preview == null) {
-                    Log.d(TAG, "resume: Preview is null")
-                }
-                if (graphicOverlay == null) {
-                    Log.d(TAG, "resume: graphOverlay is null")
-                }
-                preview!!.start(cameraSource, graphicOverlay)
-            } catch (e: IOException) {
-                Log.e(TAG, "Unable to start camera source.", e)
-                cameraSource!!.release()
-                cameraSource = null
-            }
-        }
-    }
+    protected abstract suspend fun isValid(code: Code): Boolean
 
-    private fun createCameraSource() {
-        // If there's no existing cameraSource, create one.
-        if (cameraSource == null) {
-            cameraSource = CameraSource(this, graphicOverlay)
-        }
-        try {
-            Log.i(TAG, "Using Barcode Detector Processor")
-            cameraSource!!.setMachineLearningFrameProcessor(BarcodeScannerProcessor(this))
-        } catch (e: Exception) {
-            Log.e(TAG, "Can not create image processor: Barcode", e)
-            Toast.makeText(
-                applicationContext,
-                "Can not create image processor: " + e.message,
-                Toast.LENGTH_LONG
-            )
-                .show()
-        }
-    }
+    protected abstract suspend fun resultFor(code: Code): ScannerResult
+
+    protected abstract fun didSelect(code: Code)
 }

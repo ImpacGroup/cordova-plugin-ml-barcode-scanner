@@ -34,6 +34,8 @@ class BarcodeScannerProcessor(context: Context) : VisionProcessorBase<List<Barco
   //     .build();
   private val barcodeScanner: BarcodeScanner = BarcodeScanning.getClient()
 
+  private var listener: VisionImageProcessorListener<List<Barcode>>? = null
+
   override fun stop() {
     super.stop()
     barcodeScanner.close()
@@ -43,19 +45,19 @@ class BarcodeScannerProcessor(context: Context) : VisionProcessorBase<List<Barco
     return barcodeScanner.process(image)
   }
 
-  override fun onSuccess(barcodes: List<Barcode>, graphicOverlay: GraphicOverlay) {
+  override fun onSuccess(barcodes: List<Barcode>) {
     if (barcodes.isEmpty()) {
       Log.v(MANUAL_TESTING_LOG, "No barcode has been detected")
     }
-    for (i in barcodes.indices) {
-      val barcode = barcodes[i]
-      graphicOverlay.add(BarcodeGraphic(graphicOverlay, barcode))
-      logExtrasForTesting(barcode)
-    }
+    listener?.onSuccess(barcodes)
   }
 
   override fun onFailure(e: Exception) {
     Log.e(TAG, "Barcode detection failed $e")
+  }
+
+  override fun setListener(listener: VisionImageProcessorListener<List<Barcode>>) {
+    this.listener = listener
   }
 
   companion object {
