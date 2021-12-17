@@ -90,6 +90,12 @@ public class MlBarcodeScanner extends CordovaPlugin {
         return title != null && scannerInfo != null;
     }
 
+    private void onClose() {
+        isScannerOpen = false;
+        scannerInfo = null;
+        title = null;
+    }
+
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
 
         @Override
@@ -117,6 +123,7 @@ public class MlBarcodeScanner extends CordovaPlugin {
                         ScannerMessage<Code> message = new ScannerMessage<>(ScannerAction.DID_CLOSE.getKey(), null);
                         String jsonMsg = new Gson().toJson(message);
                         sendMessage(jsonMsg, false);
+                        onClose();
                         break;
                     }
                     case MANUAL_INPUT: {
