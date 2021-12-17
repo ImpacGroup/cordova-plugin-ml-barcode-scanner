@@ -57,7 +57,7 @@ public class MlBarcodeScanner extends CordovaPlugin {
                 scannerInfo = new Gson().fromJson(args.getString(0), ScannerInfo.class);
                 openScanner();
                 return true;
-            case "setResult":
+            case "setResultScreen":
                 Intent intent = new Intent(CordovaScanner.CORDOVA_SCANNER_RESULT_ANSWER_INTENT_KEY);
                 intent.putExtra(CordovaScanner.CORDOVA_SCANNER_ANSWER_EXTRA_KEY, args.getString(0));
                 LocalBroadcastManager.getInstance(cordova.getContext()).sendBroadcast(intent);
