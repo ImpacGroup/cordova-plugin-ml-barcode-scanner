@@ -106,31 +106,36 @@ public class MlBarcodeScanner extends CordovaPlugin {
                         String screenRequest = intent.getStringExtra(CordovaScanner.CORDOVA_SCANNER_RESULT_INTENT_KEY);
                         sendMessage(screenRequest);
                         break;
-                    case DID_SELECT_CODE:
+                    case DID_SELECT_CODE: {
                         Code code = new Gson().fromJson(intent.getStringExtra(CordovaScanner.CORDOVA_SCANNER_PARAM_ACTION_KEY), Code.class);
                         ScannerMessage<Code> message = new ScannerMessage<>(ScannerAction.DID_SELECT_CODE.getKey(), code);
                         String jsonMsg = new Gson().toJson(message);
                         sendMessage(jsonMsg);
                         break;
-                    case DID_CLOSE:
-                        didClose();
+                    }
+                    case DID_CLOSE: {
+                        ScannerMessage<Code> message = new ScannerMessage<>(ScannerAction.DID_CLOSE.getKey(), null);
+                        String jsonMsg = new Gson().toJson(message);
+                        sendMessage(jsonMsg, false);
                         break;
-                    case WILL_CLOSE:
-                        willClose();
+                    }
+                    case MANUAL_INPUT: {
+                        ScannerMessage<Code> message = new ScannerMessage<>(ScannerAction.MANUAL_INPUT.getKey(), null);
+                        String jsonMsg = new Gson().toJson(message);
+                        sendMessage(jsonMsg);
                         break;
+                    }
+                    case WILL_CLOSE: {
+                        ScannerMessage<Code> message = new ScannerMessage<>(ScannerAction.WILL_CLOSE.getKey(), null);
+                        String jsonMsg = new Gson().toJson(message);
+                        sendMessage(jsonMsg);
+                        break;
+                    }
                     default: {
                         break;
                     }
                 }
             }
-        }
-
-        public void willClose() {
-            sendMessage(ScannerAction.WILL_CLOSE.getKey());
-        }
-
-        public void didClose() {
-            sendMessage(ScannerAction.DID_CLOSE.getKey(), false);
         }
     };
 

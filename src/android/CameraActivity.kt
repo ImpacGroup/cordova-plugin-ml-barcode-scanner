@@ -113,6 +113,9 @@ abstract class CameraActivity : AppCompatActivity(), ActivityCompat.OnRequestPer
             infoTxtView.text = it.infoText
 
             val btn: Button = findViewById(loadResource("manual_button", ResourceType.IDENTIFIER))
+            btn.setOnClickListener {
+                infoBtnPressed()
+            }
             btn.text = it.button?.title
             val color = ColorStateList.valueOf(Color.parseColor(it.button?.backgroundColor))
             btn.backgroundTintList = color
@@ -369,4 +372,6 @@ abstract class CameraActivity : AppCompatActivity(), ActivityCompat.OnRequestPer
     protected abstract suspend fun resultFor(code: Code): ScannerResult
 
     protected abstract fun didSelect(code: Code)
+
+    protected abstract fun infoBtnPressed()
 }

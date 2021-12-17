@@ -111,6 +111,11 @@ class CordovaScanner : CameraActivity() {
         send(ScannerAction.DID_SELECT_CODE, jsonCode)
     }
 
+    override fun infoBtnPressed() {
+        send(ScannerAction.MANUAL_INPUT, null)
+        finish()
+    }
+
     override fun onDestroy() {
         send(ScannerAction.DID_CLOSE, null)
         if (isFinishing) {
