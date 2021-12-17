@@ -8,15 +8,13 @@ import android.os.Bundle
 import android.util.Log
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 import de.impacgroup.mlbarcodescanner.module.CameraActivity
 import de.impacgroup.mlbarcodescanner.module.Code
 import de.impacgroup.mlbarcodescanner.module.ScannerResult
 import kotlinx.coroutines.delay
-import java.io.IOException
-import java.lang.Exception
 import java.util.*
 import kotlin.collections.ArrayList
-import com.google.gson.annotations.SerializedName
 
 class CordovaScanner : CameraActivity() {
 
@@ -84,23 +82,13 @@ class CordovaScanner : CameraActivity() {
         val request = Request("validationResult", code, ScannerAction.IS_VALID.key)
         val jsonRequest = Gson().toJson(request)
         send(ScannerAction.IS_VALID, jsonRequest, CORDOVA_SCANNER_VALIDATION_INTENT_KEY)
-        try {
-            val answer =  retryIO {
-                getAnswer(request.id)
-            }
+        answer(request.id)?.let { answer ->
             if (answer is ValidationAnswer) {
                 return answer.result
             }
             return false
-        } catch (e: Exception) {
+        } ?: run {
             return false
-        }
-    }
-
-    @Throws
-    private fun getAnswer(requestId: String): Answer  {
-        return answers.first {
-            it.requestId == requestId
         }
     }
 
@@ -108,18 +96,14 @@ class CordovaScanner : CameraActivity() {
         val request = Request("setResultScreen", code, ScannerAction.RESULT_SCREEN.key)
         val jsonRequest = Gson().toJson(request)
         send(ScannerAction.RESULT_SCREEN, jsonRequest, CORDOVA_SCANNER_RESULT_INTENT_KEY)
-        try {
-            val answer =  retryIO {
-                getAnswer(request.id)
-            }
+        answer(request.id)?.let { answer ->
             if (answer is ResultScreenAnswer) {
                 return answer.result
             }
             return ScannerResult("", null, "#999999")
-        } catch (e: Exception) {
+        } ?: run {
             return ScannerResult("", null, "#999999")
         }
-
     }
 
     override fun didSelect(code: Code) {
@@ -155,25 +139,18 @@ class CordovaScanner : CameraActivity() {
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
     }
 
-    private suspend fun <T> retryIO(
-        times: Int = Int.MAX_VALUE,
-        initialDelay: Long = 100,
-        maxDelay: Long = 3000,
-        factor: Double = 2.0,
-        block: suspend () -> T): T
-    {
-        var currentDelay = initialDelay
-        repeat(times - 1) {
-            try {
-                return block()
-            } catch (e: IOException) {
-                // you can log an error here and/or make a more finer-grained
-                // analysis of the cause to see if retry is needed
+    private suspend fun answer(requestId: String, repeatCount: Int = 30): Answer? {
+        var counter = 0
+        while (counter < repeatCount) {
+            answers.firstOrNull() {
+                it.requestId == requestId
+            }?.let {
+                return it
             }
-            delay(currentDelay)
-            currentDelay = (currentDelay * factor).toLong().coerceAtMost(maxDelay)
+            delay(100)
+            counter ++
         }
-        return block() // last attempt
+        return null
     }
 }
 

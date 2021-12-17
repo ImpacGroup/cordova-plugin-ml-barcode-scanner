@@ -152,10 +152,8 @@ abstract class CameraActivity : AppCompatActivity(), ActivityCompat.OnRequestPer
 
         // Get screen metrics used to setup camera for full screen resolution
         val metrics = windowManager.defaultDisplay
-        Log.d(TAG, "Screen metrics: ${metrics.width} x ${metrics.height}")
 
         val screenAspectRatio = aspectRatio(metrics.width, metrics.height)
-        Log.d(TAG, "Preview aspect ratio: $screenAspectRatio")
 
         val rotation = metrics.rotation
 
@@ -265,7 +263,7 @@ abstract class CameraActivity : AppCompatActivity(), ActivityCompat.OnRequestPer
         val lastBarcodes = detectedBarcodes
         detectedBarcodes = barcodes
         if (barcodes.isEmpty() ||
-            lastBarcodes.isNotEmpty() && 
+            lastBarcodes.isNotEmpty() &&
             lastBarcodes.first().displayValue == barcodes.first().displayValue
         ) {
             return null
@@ -280,7 +278,6 @@ abstract class CameraActivity : AppCompatActivity(), ActivityCompat.OnRequestPer
     }
 
     private suspend fun updateResultView(result: ScannerResult) = suspendCancellableCoroutine<Unit> { cont ->
-
         val textView: TextView = findViewById(loadResource("result_title_text_view", ResourceType.IDENTIFIER))
         val imageView: ImageView = findViewById(loadResource("result_image_view", ResourceType.IDENTIFIER))
         textView.text = result.title
