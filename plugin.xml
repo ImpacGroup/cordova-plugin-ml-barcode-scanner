@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
         xmlns:android="http://schemas.android.com/apk/res/android"
-        id="cordova-plugin-ml-barcode-scanner" version="0.1.6">
+        id="cordova-plugin-ml-barcode-scanner" version="0.1.7">
     <name>MlBarcodeScanner</name>
 
     <description>An Cordova plugin for iOS and Android that allows to open a barcode scanner. For the detection the plugin uses Googles MLKit.</description>
@@ -41,16 +41,16 @@
         <source-file src="src/ios/ScannerResult.swift"/>
         <source-file src="src/ios/ColorHelper-Extension.swift"/>
         <source-file src="src/ios/UIUtilities.swift"/>
-        
+
         <podspec>
             <config>
                 <source url="https://cdn.cocoapods.org/"/>
             </config>
             <pods use-frameworks="true">
-                <pod name="GoogleMLKit/BarcodeScanning" spec="2.4.0"/>                
+                <pod name="GoogleMLKit/BarcodeScanning" spec="2.4.0"/>
             </pods>
         </podspec>
-        
+
     </platform>
 
     <platform name="android">
@@ -60,12 +60,12 @@
                 <param name="android-package" value="de.impacgroup.mlbarcodescanner.MlBarcodeScanner" />
             </feature>
         </config-file>
-                        
+
         <config-file target="AndroidManifest.xml" parent="/manifest/application">
             <activity android:label="Camera-Activity" android:name="de.impacgroup.mlbarcodescanner.CordovaScanner"></activity>
         </config-file>
-        
-        
+
+
         <source-file src="src/android/mlkit/AutoFitTextureView.java" target-dir="src/main/kotlin/de/impacgroup/mlbarcodescanner/module/mlkit"/>
         <source-file src="src/android/mlkit/BarcodeScannerProcessor.kt" target-dir="src/main/kotlin/de/impacgroup/mlbarcodescanner/module/mlkit"/>
         <source-file src="src/android/mlkit/BarcodeScannerProcessorListener.kt" target-dir="src/main/kotlin/de/impacgroup/mlbarcodescanner/module/mlkit"/>
@@ -77,7 +77,7 @@
         <source-file src="src/android/mlkit/VisionImageProcessor.kt" target-dir="src/main/kotlin/de/impacgroup/mlbarcodescanner/module/mlkit"/>
         <source-file src="src/android/mlkit/VisionImageProcessorListener.kt" target-dir="src/main/kotlin/de/impacgroup/mlbarcodescanner/module/mlkit"/>
         <source-file src="src/android/mlkit/VisionProcessorBase.kt" target-dir="src/main/kotlin/de/impacgroup/mlbarcodescanner/module/mlkit"/>
-        
+
         <source-file src="src/android/BarcodeType.kt" target-dir="src/main/kotlin/de/impacgroup/mlbarcodescanner/module"/>
         <source-file src="src/android/CameraActivity.kt" target-dir="src/main/kotlin/de/impacgroup/mlbarcodescanner/module"/>
         <source-file src="src/android/Code.kt" target-dir="src/main/kotlin/de/impacgroup/mlbarcodescanner/module"/>
@@ -88,12 +88,12 @@
         <source-file src="src/android/ProcessRate.kt" target-dir="src/main/kotlin/de/impacgroup/mlbarcodescanner/module"/>
         <source-file src="src/android/GraphicConfig.java" target-dir="src/de/impacgroup/mlbarcodescanner/module"/>
         <source-file src="src/android/GraphicOverlay.java" target-dir="src/de/impacgroup/mlbarcodescanner/module"/>
-        
+
         <source-file src="src/android/CordovaScanner.kt" target-dir="src/main/kotlin/de/impacgroup/mlbarcodescanner"/>
         <source-file src="src/android/MlBarcodeScanner.java" target-dir="src/de/impacgroup/mlbarcodescanner"/>
         <source-file src="src/android/ScannerAction.kt" target-dir="src/main/kotlin/de/impacgroup/mlbarcodescanner"/>
         <source-file src="src/android/ScannerMessage.kt" target-dir="src/main/kotlin/de/impacgroup/mlbarcodescanner"/>
-        
+
         <source-file src="src/android/activity_camera.xml" target-dir="res/layout"/>
         <source-file src="src/android/camera_colors.xml" target-dir="res/values"/>
         <source-file src="src/android/camera_info_background.xml" target-dir="res/drawable"/>
@@ -103,9 +103,9 @@
         <source-file src="src/android/fade_out.xml" target-dir="res/anim"/>
         <source-file src="src/android/ic_camera_close_24.xml" target-dir="res/drawable"/>
         <source-file src="src/android/ic_camera_success_check_circle_24.xml" target-dir="res/drawable"/>
-                    
+
         <source-file src="src/android/night/camera_colors.xml" target-dir="res/values-night"/>
-        
+
         <framework src="com.google.mlkit:camera:16.0.0-beta1"/>
         <framework src="com.google.mlkit:barcode-scanning:17.0.0"/>
         <framework src="androidx.camera:camera-camera2:1.0.2"/>
