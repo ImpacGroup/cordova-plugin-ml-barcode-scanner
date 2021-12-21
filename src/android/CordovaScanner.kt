@@ -117,7 +117,9 @@ class CordovaScanner : CameraActivity() {
     }
 
     override fun onDestroy() {
-        send(ScannerAction.DID_CLOSE, null)
+        if (!isChangingConfigurations) {
+            send(ScannerAction.DID_CLOSE, null)
+        }
         if (isFinishing) {
             val broadcastManager = LocalBroadcastManager.getInstance(this)
             broadcastManager.unregisterReceiver(resultReceiver)
@@ -127,7 +129,9 @@ class CordovaScanner : CameraActivity() {
     }
 
     override fun onPause() {
-        send(ScannerAction.WILL_CLOSE, null)
+        if (!isChangingConfigurations) {
+            send(ScannerAction.WILL_CLOSE, null)
+        }
         super.onPause()
     }
 
