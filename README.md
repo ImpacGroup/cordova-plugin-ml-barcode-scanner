@@ -38,3 +38,38 @@ To these add the following:
     <preference name="GradlePluginKotlinVersion" value="1.6.0-RC" />
 ```
 
+Before you can open the scanner you should setup the scanner. First you should setup the info screen. Therefor you can set a ScannerInfo object for default or if the user declined the camera permissions (iOS only).
+
+```    
+    // object definition for info. 
+    export interface ScannerInfo {
+        title: string;
+        infoText: string;
+        button: ScannerButton;
+    }
+
+    export interface ScannerButton {
+        title: string;
+        tintColor: string;
+        backgroundColor: string;
+        roundedCorners: boolean;
+    }
+    
+    const button: ScannerButton = {
+        title: translation.scanner.manuelImei,
+        tintColor: "#FFFFFF",
+        backgroundColor: "#FF0000",
+        roundedCorners: true
+    };
+    const scannerInfo: ScannerInfo = {
+        title: "Title,
+        infoText: "Info text",
+        button: button
+    };
+    
+    // set info object
+    window.plugins.barcodeScanner.setInfoScreen(JSON.stringify(scannerInfo), (error) => {
+        console.log(error);
+    });
+```
+
