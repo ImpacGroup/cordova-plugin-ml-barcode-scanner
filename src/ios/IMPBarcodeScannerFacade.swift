@@ -61,7 +61,9 @@ enum CordovaError: Error {
      Set properties for info screen if permissions are missing.
      */
     @objc(setPermissionInfo:) func setPermissionInfo(command: CDVInvokedUrlCommand) {
-        permissionError = decodeFrom(command: command, type: ScannerInfo.self)
+        if let info = decodeFrom(command: command, type: ScannerInfo.self) {
+            permissionError = info
+        }
     }
     
     @objc(setResultScreen:) func setResultScreen(command: CDVInvokedUrlCommand) {
