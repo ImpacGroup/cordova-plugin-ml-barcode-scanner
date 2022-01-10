@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import Cordova
 import Combine
 
 enum CordovaError: Error {
