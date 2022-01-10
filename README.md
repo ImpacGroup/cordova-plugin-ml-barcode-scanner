@@ -1,6 +1,9 @@
 # README #
 
-### An Cordova plugin for iOS and Android that allows to open a barcode scanner. For the detection the plugin uses Googles MLKit. ###
+### An Cordova plugin for iOS and Android that allows to open a barcode scanner. ###
+
+### Note ###
+These plugin uses Google MLKit for detection of the barcode or QR-Code.
 
 ### Supported platforms ###
 - Android 7+
