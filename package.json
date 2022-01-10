@@ -1,6 +1,6 @@
 {
   "name": "cordova-plugin-ml-barcode-scanner",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "An Cordova plugin for iOS and Android that allows to open a barcode scanner. For the detection the plugin uses Googles MLKit.",
   "cordova": {
     "id": "cordova-plugin-ml-barcode-scanner",

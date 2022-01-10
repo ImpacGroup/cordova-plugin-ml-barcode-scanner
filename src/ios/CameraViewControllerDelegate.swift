@@ -23,6 +23,8 @@ import Foundation
      Gets called if the incoming image can not be analyzed.
      */
     @objc optional func couldNotAnalyzeInput()
+    
+    @objc optional func permissionErrorMsg() -> ScannerInfo?
 
     @objc optional func willClose()
     

@@ -9,6 +9,7 @@ import Foundation
 
 enum BarcodeError: Error {
     case failedToScan
+    case missingPermission
     case nothingFound
     case alreadyMarked
     case incompleteBarcode

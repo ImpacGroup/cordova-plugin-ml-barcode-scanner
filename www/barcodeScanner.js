@@ -33,6 +33,13 @@ MlBarcodeScanner.prototype.setResultScreen = function(screen, errorCallback) {
     cordova.exec(null, errorCallback, 'MlBarcodeScanner', 'setResultScreen', [screen]);
 }
 
+/**
+The method can be used to customize the message display to the customer if the camera permissions are missing.
+*/
+MlBarcodeScanner.prototype.setPermissionInfo = function(info, errorCallback) {
+    cordova.exec(null, errorCallback, 'MlBarcodeScanner', 'setPermissionInfo', [info]);
+}
+
 MlBarcodeScanner.install = function() {
     if (!window.plugins) {
         window.plugins = {};

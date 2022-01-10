@@ -65,16 +65,42 @@ class CameraViewController: UIViewController {
         previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
         titleLabel.text = title
         setUpPreviewOverlayView()
-        setUpCaptureSessionOutput()
-        setUpCaptureSessionInput()
+        setupCaptureSession()
         setupInfoView()
         // Do any additional setup after loading the view.
     }
-    
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        setScanArea()
-        startSession()
+            
+    private func setupCaptureSession() {
+        weak var weakSelf = self
+        guard let strongSelf = weakSelf else {
+            return
+        }
+        
+        strongSelf.setUpCaptureSessionOutput()
+        .flatMap { _ in
+            return strongSelf.setUpCaptureSessionInput()
+        }
+        .receive(on: DispatchQueue.main)
+        .map { (_) -> Bool in
+            return true
+        }
+        .catch { error -> AnyPublisher<Bool, Never> in
+            if let mError = error as? BarcodeError, mError == .missingPermission {
+                print("Missing Permission")
+                if let msg = strongSelf.delegate?.permissionErrorMsg?() {
+                    strongSelf.display(info: msg)
+                } else {
+                    strongSelf.delegate?.preferredManuelInput()
+                    strongSelf.close()
+                }
+            }
+            return Just(false).eraseToAnyPublisher()
+        }.sink { result in
+            if result {
+                strongSelf.setScanArea()
+                strongSelf.startSession()
+            }
+        }.store(in: &cancellables)
     }
     
     private func setScanArea() {
@@ -114,70 +140,83 @@ class CameraViewController: UIViewController {
       }
     }
     
-    private func setUpCaptureSessionOutput() {
-        weak var weakSelf = self
-        sessionQueue.async {
-            guard let strongSelf = weakSelf else {
+    private func setUpCaptureSessionOutput() -> AnyPublisher<Void, Error> {
+        return Future<Void, Error> { [weak self] promise in
+            guard let strongSelf = self else {
                 print("Self is nil!")
+                promise(Result.failure(BarcodeError.failedToScan))
                 return
             }
-        strongSelf.captureSession.beginConfiguration()
-        // When performing latency tests to determine ideal capture settings,
-        // run the app in 'release' mode to get accurate performance metrics
-        strongSelf.captureSession.sessionPreset = AVCaptureSession.Preset.hd1920x1080
-                              
-        let output = AVCaptureVideoDataOutput()
-        output.videoSettings = [
-          (kCVPixelBufferPixelFormatTypeKey as String): kCVPixelFormatType_32BGRA
-        ]
-        output.alwaysDiscardsLateVideoFrames = true
-          
-        let outputQueue = DispatchQueue(label: Constant.videoDataOutputQueueLabel)
-        output.setSampleBufferDelegate(strongSelf, queue: outputQueue)
-        guard strongSelf.captureSession.canAddOutput(output) else {
-          print("Failed to add capture session output.")
-          return
-        }
-        strongSelf.captureSession.addOutput(output)
-        strongSelf.captureSession.commitConfiguration()
-      }
-    }
-
-    private func setUpCaptureSessionInput() {
-        weak var weakSelf = self
-        sessionQueue.async {
-            guard let strongSelf = weakSelf else {
-                print("Self is nil!")
-                return
-            }
-            let cameraPosition: AVCaptureDevice.Position = .back
-            guard let device = strongSelf.captureDevice(forPosition: cameraPosition) else {
-                print("Failed to get capture device for camera position: \(cameraPosition)")
-                return
-            }
-            do {
+            strongSelf.sessionQueue.async {
                 strongSelf.captureSession.beginConfiguration()
-                let currentInputs = strongSelf.captureSession.inputs
-                for input in currentInputs {
-                    strongSelf.captureSession.removeInput(input)
-                }
-                let input = try AVCaptureDeviceInput(device: device)
-            
-                try device.lockForConfiguration()
-                device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: 25)
-                device.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: 30)
-                device.unlockForConfiguration()
-                
-                guard strongSelf.captureSession.canAddInput(input) else {
-                    print("Failed to add capture session input.")
+                // When performing latency tests to determine ideal capture settings,
+                // run the app in 'release' mode to get accurate performance metrics
+                strongSelf.captureSession.sessionPreset = AVCaptureSession.Preset.hd1920x1080
+                                      
+                let output = AVCaptureVideoDataOutput()
+                output.videoSettings = [
+                  (kCVPixelBufferPixelFormatTypeKey as String): kCVPixelFormatType_32BGRA
+                ]
+                output.alwaysDiscardsLateVideoFrames = true
+                  
+                let outputQueue = DispatchQueue(label: Constant.videoDataOutputQueueLabel)
+                output.setSampleBufferDelegate(strongSelf, queue: outputQueue)
+                guard strongSelf.captureSession.canAddOutput(output) else {
+                    print("Failed to add capture session output.")
+                    strongSelf.captureSession.commitConfiguration()
+                    promise(Result.failure(BarcodeError.failedToScan))
                     return
                 }
-                strongSelf.captureSession.addInput(input)
+                strongSelf.captureSession.addOutput(output)
                 strongSelf.captureSession.commitConfiguration()
-            } catch {
-                print("Failed to create capture device input: \(error.localizedDescription)")
+                promise(Result.success(Void()))
             }
-        }
+        }.eraseToAnyPublisher()
+    }
+
+    private func setUpCaptureSessionInput() -> AnyPublisher<Void, Error> {
+        return Future<Void, Error> { [weak self] promise in
+            guard let strongSelf = self else {
+                promise(Result.failure(BarcodeError.failedToScan))
+                return
+            }
+            strongSelf.sessionQueue.async {
+                
+                let cameraPosition: AVCaptureDevice.Position = .back
+                guard let device = strongSelf.captureDevice(forPosition: cameraPosition) else {
+                    print("Failed to get capture device for camera position: \(cameraPosition)")
+                    promise(Result.failure(BarcodeError.failedToScan))
+                    return
+                }
+                do {
+                    strongSelf.captureSession.beginConfiguration()
+                    let currentInputs = strongSelf.captureSession.inputs
+                    for input in currentInputs {
+                        strongSelf.captureSession.removeInput(input)
+                    }
+                    let input = try AVCaptureDeviceInput(device: device)
+                
+                    try device.lockForConfiguration()
+                    device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: 25)
+                    device.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: 30)
+                    device.unlockForConfiguration()
+                    
+                    guard strongSelf.captureSession.canAddInput(input) else {
+                        print("Failed to add capture session input.")
+                        promise(Result.failure(BarcodeError.failedToScan))
+                        strongSelf.captureSession.commitConfiguration()
+                        return
+                    }
+                    strongSelf.captureSession.addInput(input)
+                    strongSelf.captureSession.commitConfiguration()
+                    promise(Result.success(Void()))
+                } catch {
+                    promise(Result.failure(BarcodeError.missingPermission))
+                    strongSelf.captureSession.commitConfiguration()
+                    print("Failed to create capture device input: \(error.localizedDescription)")
+                }
+            }
+        }.eraseToAnyPublisher()
     }
     
     private func captureDevice(forPosition position: AVCaptureDevice.Position) -> AVCaptureDevice? {
@@ -223,18 +262,22 @@ class CameraViewController: UIViewController {
     private func setupInfoView() {
         bottomView.layer.cornerRadius = 8
         if let info = delegate?.setScreen() {
-            infoView.isHidden = false
-            infoLabel.text = info.title
-            infoDescriptionTextView.text = info.infoText
-            if let button = info.button {
-                infoButton.isHidden = false
-                infoButton.setTitle(button.title, for: .normal)
-                infoButton.tintColor = button.tintColor
-                infoButton.backgroundColor = button.backgroundColor
-                infoButton.layer.cornerRadius = button.roundedCorners ? 8 : 0
-            } else {
-                infoView.isHidden = true
-            }
+            display(info: info)
+        } else {
+            infoView.isHidden = true
+        }
+    }
+    
+    private func display(info: ScannerInfo) {
+        infoView.isHidden = false
+        infoLabel.text = info.title
+        infoDescriptionTextView.text = info.infoText
+        if let button = info.button {
+            infoButton.isHidden = false
+            infoButton.setTitle(button.title, for: .normal)
+            infoButton.tintColor = button.tintColor
+            infoButton.backgroundColor = button.backgroundColor
+            infoButton.layer.cornerRadius = button.roundedCorners ? 8 : 0
         } else {
             infoView.isHidden = true
         }

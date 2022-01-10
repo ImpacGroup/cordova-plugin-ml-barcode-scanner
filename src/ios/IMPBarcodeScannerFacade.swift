@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Cordova
 import Combine
 
 enum CordovaError: Error {
@@ -25,6 +26,8 @@ enum CordovaError: Error {
     private lazy var answers: [Answer] = []
     
     private lazy var codesToValidate: [Code] = []
+    
+    private var permissionError: ScannerInfo = ScannerInfo(title: "Error", text: "Missing Permission", button: ScannerButton(title: "Close"))
     
     /**
      Open Scanner
@@ -53,6 +56,13 @@ enum CordovaError: Error {
      */
     @objc(setInfoScreen:) func setInfoScreen(command: CDVInvokedUrlCommand) {
         infoScreen = decodeFrom(command: command, type: ScannerInfo.self)
+    }
+    
+    /**
+     Set properties for info screen if permissions are missing.
+     */
+    @objc(setPermissionInfo:) func setPermissionInfo(command: CDVInvokedUrlCommand) {
+        permissionError = decodeFrom(command: command, type: ScannerInfo.self)
     }
     
     @objc(setResultScreen:) func setResultScreen(command: CDVInvokedUrlCommand) {
@@ -175,6 +185,10 @@ enum CordovaError: Error {
     func didClose() {
         sendUpdateMessage(message: ScannerMessage<String>(action: ScannerAction.DID_CLOSE.rawValue), status: CDVCommandStatus_OK, keep: false)
         cancellables.removeAll()
+    }
+    
+    func permissionErrorMsg() -> ScannerInfo? {
+        return permissionError
     }
     
     private func sendUpdateMessage<T: Encodable>(message: T, status: CDVCommandStatus, keep: Bool = true) {
